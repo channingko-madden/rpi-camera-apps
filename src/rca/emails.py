@@ -11,6 +11,23 @@ import mimetypes
 import smtplib
 
 def send_text_email(receiver, sender, password, subject, body):
+    """
+    Send a email, whose body is text, using SMTP
+
+    Parameters:
+    -----------
+    receiver : str
+        Email address of receiver
+    sender : str
+        Email address of sender
+    password : str
+        Email password of sender
+    subject : str
+        Email subject line
+    body : str
+        Email body text
+    """
+        
     msg = EmailMessage()
     msg['Subject'] = subject
     msg['From'] = sender
@@ -33,8 +50,13 @@ class ImageBody(ABC):
     """
     An interface that defines building an EmailMessage object that contains
     images within the message
+
+    Methods:
+    --------
+    build_msg
+        Return EmailMessage containing images that can be sent
     """
-    def buildMsg(images):
+    def build_msg(self, images):
         """
         Return an EmailMessage object containing the images that can be sent
 
@@ -47,17 +69,24 @@ class ImageBody(ABC):
 
 
 class HtmlImageBody(ImageBody):
+    """
+    This class uses embedded html to place images within the body of the email
+
+    """
 
     def __init__(self, receiver, sender, subject):
+        """
+        Initialize the email receiver, sender, and subject
+        """
         self._receiver = receiver
         self._sender = sender
         self._subject = subject
 
-    def buildMsg(images):
+    def build_msg(self, images):
         msg = EmailMessage()
-        msg['Subject'] = subject
-        msg['From'] = sender
-        msg['To'] = receiver
+        msg['Subject'] = self._subject
+        msg['From'] = self._sender
+        msg['To'] = self._receiver
 
         # start html with opening tags
         html_str = """
@@ -84,10 +113,9 @@ class HtmlImageBody(ImageBody):
         msg.add_alternative(html_str, subtype='html')
 
         for i in range(0, len(images)):
-
-            with open(images[i]) as img:
+            with open(images[i], 'rb') as img:
                 maintype, subtype = mimetypes.guess_type(img.name)[0].split('/')
-                msg.get_payload()[i + 1].add_related(img.read(), maintype=maintype, subtype=subtype, cid=image_cids[i])
+                msg.get_payload()[0].add_related(img.read(), maintype=maintype, subtype=subtype, cid=image_cids[i])
 
         return msg
 

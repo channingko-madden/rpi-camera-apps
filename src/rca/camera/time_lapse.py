@@ -116,7 +116,7 @@ class TimeLapseCapture:
             camera.start_preview()
             file_list = []
             try:
-                for i, filename in enumerate(camera.capture_continous(self._image_folder + 'img{counter}.jpg')):
+                for i, filename in enumerate(camera.capture_continuous(self._image_folder + 'img{counter}.jpg')):
                     file_list.append(filename)
                     if i == self._image_count:
                         break
