@@ -40,6 +40,9 @@ def main(args):
         return 1
 
     def send_callback(images):
+        """
+        Callback function for TimeLapseCapture that sends the images in an email
+        """
         builder = rca.emails.HtmlImageBody(args.to, args.gmail, "Greetings!")
         msg = builder.build_msg(images)
         try:
@@ -52,7 +55,6 @@ def main(args):
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : Email sent successfully")
         except smtplib.SMTPException as error:
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : Error occured" + str(error))
-            
 
     picture_taker = TimeLapseCapture()
     picture_taker.image_folder = args.folder
@@ -60,9 +62,9 @@ def main(args):
     picture_taker.capture_delay = args.delay #seconds
 
     while True:
-        print("Starting picture taking");
+        print("Starting picture taking")
         picture_taker.sync_capture(send_callback)
-        print("Ending picture taking");
+        print("Ending picture taking")
 
     return 0
 
@@ -70,7 +72,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-to", "-t", type=str, help="Provide email to send to", default="", required=True)
     parser.add_argument("-gmail", "-g", type=str, help="Provide gmail to send from", default="", required=True)
-    parser.add_argument("-password", "-p", type=str, help="Provide gmail password", default="", required=True)
+    parser.add_argument("-password", "-p", type=str, help="Provide Google App password", default="", required=True)
     parser.add_argument("-delay", "-d", type=int, help="Provide delay between photos (sec)", default=10)
     parser.add_argument("-images", "-i", type=int, help="Provide the number of images per email", default=6)
     parser.add_argument("-folder",
@@ -79,6 +81,4 @@ if __name__ == '__main__':
             help="Provide directory to temporarily store photos (ex. /home/pi/Pictures/)",
             default="")
 
-    args = parser.parse_args()
-
-    main(args)
+    main(parser.parse_args())

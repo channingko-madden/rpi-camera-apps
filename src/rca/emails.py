@@ -21,13 +21,13 @@ def send_text_email(receiver, sender, password, subject, body):
     sender : str
         Email address of sender
     password : str
-        Email password of sender
+        Google App password of sender
     subject : str
         Email subject line
     body : str
         Email body text
     """
-        
+       
     msg = EmailMessage()
     msg['Subject'] = subject
     msg['From'] = sender
