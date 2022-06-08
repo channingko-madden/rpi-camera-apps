@@ -2,11 +2,12 @@
 
 ##
 # file: email_time_lapse.py
-# date: 2021-11-23
+# date: 2022-05-12
 # author: Channing Ko-Madden
 #
 # description: This app takes pictures at a given time interval, and emails the pictures to you!
 
+from datetime import datetime
 import argparse
 import smtplib
 from rca.camera.time_lapse import TimeLapseCapture
@@ -48,9 +49,10 @@ def main(args):
             client.ehlo()
             client.login(user=args.gmail, password=args.password)
             client.sendmail(args.gmail, args.to, msg.as_string())
-
+            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : Email sent successfully")
         except smtplib.SMTPException as error:
-            print("Error occured" + str(error))
+            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : Error occured" + str(error))
+            
 
     picture_taker = TimeLapseCapture()
     picture_taker.image_folder = args.folder
@@ -58,7 +60,9 @@ def main(args):
     picture_taker.capture_delay = args.delay #seconds
 
     while True:
+        print("Starting picture taking");
         picture_taker.sync_capture(send_callback)
+        print("Ending picture taking");
 
     return 0
 
