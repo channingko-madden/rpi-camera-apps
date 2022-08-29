@@ -32,7 +32,7 @@ def main(args):
         return 1
 
     if not args.password:
-        print ("Missing -password argument")
+        print("Missing -password argument")
         return 1
 
     if not args.to:
@@ -54,7 +54,11 @@ def main(args):
             client.sendmail(args.gmail, args.to, msg.as_string())
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : Email sent successfully")
         except smtplib.SMTPException as error:
-            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : Error occured" + str(error))
+            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : SMTP Error occured" + str(error))
+        except OSError as error:
+            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : OS Error occured" + str(error))
+        except BaseException as error:
+            print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : Unknown Error occured" + str(error))
 
     picture_taker = TimeLapseCapture()
     picture_taker.image_folder = args.folder
