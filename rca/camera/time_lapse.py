@@ -6,22 +6,13 @@ Classes:
         - Sync/Async time lapse photo capture with callback
 """
 
-##
-# file: time_lapse_capture.py
-# date: 2021-11-23
-# author: Channing Ko-Madden
-#
-# description: This module contains classes and functions for capturing time lapse photos
-# using the pi camera
+import logging
 
-import time
-from picamera import PiCamera
+from picamera2 import Picamera2
+
+logger = logging.getLogger(__name__)
 
 
-##
-# @class TimeLapseCapture
-# @brief This class can be used to capture time lapse photos at a certain rate, and a
-# callback called when capturing the time lapse photos has ended.
 class TimeLapseCapture:
     """
     A class to capture time lapse photos asynchronously or synchronously, and call a
@@ -41,9 +32,9 @@ class TimeLapseCapture:
 
     """
 
-    _image_folder = None # Path to folder where image files can temporarily be stored
-    _image_count = 0 # Number of images to capture for time lapse
-    _capture_delay = 0 # Delay between capturing photos (s)
+    _image_folder = None  # Path to folder where image files can temporarily be stored
+    _image_count = 0  # Number of images to capture for time lapse
+    _capture_delay = 0  # Delay between capturing photos (s)
 
     @property
     def image_folder(self):
@@ -94,7 +85,7 @@ class TimeLapseCapture:
     def capture_delay(self, delay):
         """
         Set the value for capture_delay attribute
-       
+
         Parameters
         ----------
             delay : float
@@ -112,17 +103,19 @@ class TimeLapseCapture:
                 Callback function called when time lapse capture ends, passed a list of str containing the
                 image files.
         """
-        with PiCamera() as camera:
-            camera.start_preview()
-            file_list = []
+        with Picamera2() as camera:
+            camera_config = camera.create_still_configuration()
+            camera.configure(camera_config)
+            camera.start()
             try:
-                for i, filename in enumerate(camera.capture_continuous(self._image_folder + 'img{counter}.jpg')):
-                    file_list.append(filename)
-                    if i == self._image_count:
-                        break
-                    time.sleep(self._capture_delay)
-                
-            finally:
-                camera.stop_preview()
+                camera.start_and_capture_files(
+                    f"{self._image_folder}/img{{:d}}.jpg",
+                    initial_delay=5,
+                    delay=self._capture_delay,
+                    num_files=self._image_count,
+                )
                 if callable(callback):
+                    file_list = [f"{self._image_folder}/img{x}.jpg" for x in range(0, self._image_count)]
                     callback(file_list)
+            except Exception:
+                logger.exception("Encountered an error capturing images")
