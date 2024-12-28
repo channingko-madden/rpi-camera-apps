@@ -1,49 +1,47 @@
 """
 Classes and functions for sending emails
 
-Classes:
 """
 
-from abc import ABC
-from email.message import EmailMessage
-from email.utils import make_msgid
+import logging
 import mimetypes
 import smtplib
+from abc import ABC, abstractmethod
+from email.message import EmailMessage
+from email.utils import make_msgid
+from pathlib import Path
 
-def send_text_email(receiver, sender, password, subject, body):
+logger = logging.getLogger(__name__)
+
+
+def send_text_email(receiver: str, sender: str, password: str, subject: str, body: str) -> None:
     """
     Send a email, whose body is text, using SMTP
 
-    Parameters:
-    -----------
-    receiver : str
-        Email address of receiver
-    sender : str
-        Email address of sender
-    password : str
-        Google App password of sender
-    subject : str
-        Email subject line
-    body : str
-        Email body text
+    Args:
+        receiver : Email address of receiver
+        sender : Gmail address of sender
+        password : Google App password of sender
+        subject : Email subject line
+        body : Email body text
     """
-       
+
     msg = EmailMessage()
-    msg['Subject'] = subject
-    msg['From'] = sender
-    msg['To'] = receiver
+    msg["Subject"] = subject
+    msg["From"] = sender
+    msg["To"] = receiver
     msg.set_content(body)
 
     try:
-        client = smtplib.SMTP('smtp.gmail.com', 587)
+        client = smtplib.SMTP("smtp.gmail.com", 587)
         client.ehlo()
         client.starttls()
         client.ehlo()
         client.login(user=sender, password=password)
         client.sendmail(sender, receiver, msg.as_string())
 
-    except smtplib.SMTPException as error:
-        print("Error occured" + str(error))
+    except smtplib.SMTPException:
+        logger.exception("An error occured sending an email using SMTP")
 
 
 class ImageBody(ABC):
@@ -56,14 +54,14 @@ class ImageBody(ABC):
     build_msg
         Return EmailMessage containing images that can be sent
     """
-    def build_msg(self, images):
+
+    @abstractmethod
+    def build_msg(self, images: list[Path]) -> EmailMessage:
         """
         Return an EmailMessage object containing the images that can be sent
 
-        Parameters
-        ----------
-            images : list of str
-                file names of images
+        Args:
+            images : a list of image file paths
         """
         pass
 
@@ -74,7 +72,7 @@ class HtmlImageBody(ImageBody):
 
     """
 
-    def __init__(self, receiver, sender, subject):
+    def __init__(self, receiver: str, sender: str, subject: str):
         """
         Initialize the email receiver, sender, and subject
         """
@@ -82,11 +80,11 @@ class HtmlImageBody(ImageBody):
         self._sender = sender
         self._subject = subject
 
-    def build_msg(self, images):
+    def build_msg(self, images: list[Path]) -> EmailMessage:
         msg = EmailMessage()
-        msg['Subject'] = self._subject
-        msg['From'] = self._sender
-        msg['To'] = self._receiver
+        msg["Subject"] = self._subject
+        msg["From"] = self._sender
+        msg["To"] = self._receiver
 
         # start html with opening tags
         html_str = """
@@ -105,19 +103,16 @@ class HtmlImageBody(ImageBody):
                         """.format(image_cid=cid[1:-1])
             image_cids.append(cid)
 
-        # add closing tags 
+        # add closing tags
         html_str += """
                     </body>
                 </html>
                 """
-        msg.add_alternative(html_str, subtype='html')
+        msg.add_alternative(html_str, subtype="html")
 
         for i in range(0, len(images)):
-            with open(images[i], 'rb') as img:
-                maintype, subtype = mimetypes.guess_type(img.name)[0].split('/')
+            with open(images[i], "rb") as img:
+                maintype, subtype = mimetypes.guess_type(img.name)[0].split("/")
                 msg.get_payload()[0].add_related(img.read(), maintype=maintype, subtype=subtype, cid=image_cids[i])
 
         return msg
-
-
-
