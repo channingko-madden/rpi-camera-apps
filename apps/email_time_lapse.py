@@ -1,29 +1,24 @@
 #!/usr/bin/python3
 
 import argparse
-import logging
 import smtplib
-from datetime import datetime
+from pathlib import Path
 
 import rca.emails
 from rca.camera.time_lapse import TimeLapseCapture
+from rca.logger import create_rca_logger, get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
-def main(args):
+def main(args: argparse.Namespace) -> int:
     """
     Main function
 
-    Parameters:
-    -----------
-    args
-        Arguments returned by argparser.ArgumentParser.parse_args()
+    Returns 0 on successful execution, non-zero value indicates an error occured
 
-    Return:
-    -------
-        0 on successful execution, non-zero value indicates an error occured
-
+    Args:
+        args: CLI Arguments passed by the user
     """
     if not args.gmail:
         print("Missing -gmail argument")
@@ -37,11 +32,14 @@ def main(args):
         print("Missing -to argument")
         return 1
 
-    def send_callback(images: list[str]):
+    create_rca_logger(log_file=args.logfile)
+
+    builder = rca.emails.HtmlImageBody(args.to, args.gmail, "Greetings!")
+
+    def send_callback(images: list[str]) -> None:
         """
         Callback function for TimeLapseCapture that sends the images in an email
         """
-        builder = rca.emails.HtmlImageBody(args.to, args.gmail, "Greetings!")
         msg = builder.build_msg(images)
         try:
             client = smtplib.SMTP("smtp.gmail.com", 587)
@@ -50,18 +48,15 @@ def main(args):
             client.ehlo()
             client.login(user=args.gmail, password=args.password)
             client.sendmail(args.gmail, args.to, msg.as_string())
-            logger.debug(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : Email sent successfully")
+            logger.debug("Email sent successfully")
         except smtplib.SMTPException:
-            logger.exception(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : SMTP Error occured")
+            logger.exception("SMTP Error occured")
         except OSError:
-            logger.exception(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : OS Error occured")
+            logger.exception("OS Error occured")
         except Exception:
-            logger.exception(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : Unknown Error occured")
+            logger.exception("Unknown Error occured")
 
-    picture_taker = TimeLapseCapture()
-    picture_taker.image_folder = args.folder
-    picture_taker.image_count = args.images
-    picture_taker.capture_delay = args.delay  # seconds
+    picture_taker = TimeLapseCapture(image_folder=args.folder, image_count=args.images, capture_delay=args.delay)
 
     while True:
         logger.debug("Starting picture taking")
@@ -80,9 +75,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "-folder",
         "-f",
-        type=str,
+        type=Path,
         help="Provide directory to temporarily store photos (ex. /home/pi/Pictures/)",
-        default="",
+        default="./",
+    )
+    parser.add_argument(
+        "-logfile",
+        "-lf",
+        type=Path,
+        help="Provide path to file for writing logs (ex. /home/pi/log.txt)",
+        default=None,
+        required=False,
     )
 
     main(parser.parse_args())

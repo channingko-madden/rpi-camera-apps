@@ -1,32 +1,29 @@
 """
 Classes and functions for sending emails
 
-Classes:
 """
 
+import logging
 import mimetypes
 import smtplib
-from abc import ABC
+from abc import ABC, abstractmethod
 from email.message import EmailMessage
 from email.utils import make_msgid
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
-def send_text_email(receiver, sender, password, subject, body):
+def send_text_email(receiver: str, sender: str, password: str, subject: str, body: str) -> None:
     """
     Send a email, whose body is text, using SMTP
 
-    Parameters:
-    -----------
-    receiver : str
-        Email address of receiver
-    sender : str
-        Email address of sender
-    password : str
-        Google App password of sender
-    subject : str
-        Email subject line
-    body : str
-        Email body text
+    Args:
+        receiver : Email address of receiver
+        sender : Gmail address of sender
+        password : Google App password of sender
+        subject : Email subject line
+        body : Email body text
     """
 
     msg = EmailMessage()
@@ -43,8 +40,8 @@ def send_text_email(receiver, sender, password, subject, body):
         client.login(user=sender, password=password)
         client.sendmail(sender, receiver, msg.as_string())
 
-    except smtplib.SMTPException as error:
-        print("Error occured" + str(error))
+    except smtplib.SMTPException:
+        logger.exception("An error occured sending an email using SMTP")
 
 
 class ImageBody(ABC):
@@ -58,14 +55,13 @@ class ImageBody(ABC):
         Return EmailMessage containing images that can be sent
     """
 
-    def build_msg(self, images):
+    @abstractmethod
+    def build_msg(self, images: list[Path]) -> EmailMessage:
         """
         Return an EmailMessage object containing the images that can be sent
 
-        Parameters
-        ----------
-            images : list of str
-                file names of images
+        Args:
+            images : a list of image file paths
         """
         pass
 
@@ -76,7 +72,7 @@ class HtmlImageBody(ImageBody):
 
     """
 
-    def __init__(self, receiver, sender, subject):
+    def __init__(self, receiver: str, sender: str, subject: str):
         """
         Initialize the email receiver, sender, and subject
         """
@@ -84,7 +80,7 @@ class HtmlImageBody(ImageBody):
         self._sender = sender
         self._subject = subject
 
-    def build_msg(self, images):
+    def build_msg(self, images: list[Path]) -> EmailMessage:
         msg = EmailMessage()
         msg["Subject"] = self._subject
         msg["From"] = self._sender
