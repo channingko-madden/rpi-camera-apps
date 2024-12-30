@@ -21,7 +21,7 @@ def create_rca_logger(log_level: int = logging.DEBUG, log_file: Optional[Path] =
     if log_file is not None:
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(log_level)
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(name)s - %(message)s")
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 

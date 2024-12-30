@@ -51,13 +51,16 @@ class TimeLapseCapture:
             camera.start()
             try:
                 camera.start_and_capture_files(
-                    f"{self.image_folder / 'img{{:d}}.jpg'}",
+                    str(self.image_folder / "time_lapse_capture_img{:d}.jpg"),
                     initial_delay=5,
                     delay=self.capture_delay,
                     num_files=self.image_count,
+                    # show_preview=False,
                 )
                 if callable(callback):
-                    file_list: list[Path] = [self.image_folder / f"img{x}.jpg" for x in range(0, self.image_count)]
+                    file_list: list[Path] = [
+                        self.image_folder / f"time_lapse_capture_img{x}.jpg" for x in range(0, self.image_count)
+                    ]
                     callback(file_list)
             except Exception:
                 logger.exception("Encountered an error capturing images")

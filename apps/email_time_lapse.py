@@ -36,7 +36,7 @@ def main(args: argparse.Namespace) -> int:
 
     builder = rca.emails.HtmlImageBody(args.to, args.gmail, "Greetings!")
 
-    def send_callback(images: list[str]) -> None:
+    def send_callback(images: list[Path]) -> None:
         """
         Callback function for TimeLapseCapture that sends the images in an email
         """
@@ -77,14 +77,14 @@ if __name__ == "__main__":
         "-f",
         type=Path,
         help="Provide directory to temporarily store photos (ex. /home/pi/Pictures/)",
-        default="./",
+        default=Path.cwd(),
     )
     parser.add_argument(
         "-logfile",
         "-lf",
         type=Path,
         help="Provide path to file for writing logs (ex. /home/pi/log.txt)",
-        default=None,
+        default=Path.cwd() / "email_time_lapse_log.txt",
         required=False,
     )
 
